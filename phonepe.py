@@ -758,8 +758,8 @@ def top_brands_by_transaction_count(table_name):
                  color_discrete_sequence=px.colors.sequential.Oranges_r)
     st.plotly_chart(fig)
 
-#Monthly Transaction Amount Trend for a Selected State:
-def monthly_transaction_trend(table_name, state):
+# Yearly Transaction Amount Trend for a Selected State:
+def yearly_transaction_trend(table_name, state):
     mydb = mysql.connector.connect(
         host="localhost",
         user="root",
@@ -789,6 +789,102 @@ def monthly_transaction_trend(table_name, state):
                   markers=True, color_discrete_sequence=px.colors.sequential.Emrld_r)
     st.plotly_chart(fig)
 
+
+# Top 10 States by Total Transaction Amount
+def top_states_by_transaction_amount(table_name):
+    mydb = mysql.connector.connect(
+        host="localhost",
+        user="root",
+        password="radha",
+        database="Youtube_data",
+        port="3306",
+        auth_plugin='mysql_native_password'
+    )
+    cursor = mydb.cursor()
+
+    query = f"""
+        SELECT States, SUM(Transaction_amount) AS transaction_amount
+        FROM {table_name}
+        GROUP BY States
+        ORDER BY transaction_amount DESC
+        LIMIT 10
+    """
+    cursor.execute(query)
+    results = cursor.fetchall()
+    mydb.commit()
+    cursor.close()
+    mydb.close()
+
+    df = pd.DataFrame(results, columns=["States", "transaction_amount"])
+
+    fig = px.bar(df, x='States', y='transaction_amount', title="Top 10 States by Transaction Amount",
+                 color_discrete_sequence=px.colors.sequential.Blues_r)
+    st.plotly_chart(fig)
+
+
+# Top 10 States by Total Transaction Count
+def top_states_by_transaction_count(table_name):
+    mydb = mysql.connector.connect(
+        host="localhost",
+        user="root",
+        password="radha",
+        database="Youtube_data",
+        port="3306",
+        auth_plugin='mysql_native_password'
+    )
+    cursor = mydb.cursor()
+
+    query = f"""
+        SELECT States, SUM(Transaction_count) AS transaction_count
+        FROM {table_name}
+        GROUP BY States
+        ORDER BY transaction_count DESC
+        LIMIT 10
+    """
+    cursor.execute(query)
+    results = cursor.fetchall()
+    mydb.commit()
+    cursor.close()
+    mydb.close()
+
+    df = pd.DataFrame(results, columns=["States", "transaction_count"])
+
+    fig = px.bar(df, x='States', y='transaction_count', title="Top 10 States by Transaction Count",
+                 color_discrete_sequence=px.colors.sequential.Teal_r)
+    st.plotly_chart(fig)
+
+
+#  Top 10 Districts by Registered Users in Map User
+def top_districts_by_registered_users(table_name, state):
+    mydb = mysql.connector.connect(
+        host="localhost",
+        user="root",
+        password="radha",
+        database="Youtube_data",
+        port="3306",
+        auth_plugin='mysql_native_password'
+    )
+    cursor = mydb.cursor()
+
+    query = f"""
+        SELECT Districts, SUM(RegisteredUsers) AS registered_users
+        FROM {table_name}
+        WHERE States = '{state}'
+        GROUP BY Districts
+        ORDER BY registered_users DESC
+        LIMIT 10
+    """
+    cursor.execute(query)
+    results = cursor.fetchall()
+    mydb.commit()
+    cursor.close()
+    mydb.close()
+
+    df = pd.DataFrame(results, columns=["Districts", "registered_users"])
+
+    fig = px.bar(df, x='Districts', y='registered_users', title=f"Top 10 Districts by Registered Users in {state}",
+                 color_discrete_sequence=px.colors.sequential.Purp_r)
+    st.plotly_chart(fig)
 
 
 # streamlit part
@@ -1054,21 +1150,51 @@ elif select == "Data Exploration":
 
 
 elif select == "Top Charts":
-    question = st.selectbox("Select the Question", ["1. Transaction Amount and Count of Aggregated Insurance",
-                                                    "2. Transaction Amount and Count of Map Insurance",
-                                                    "3. Transaction Amount and Count of Top Insurance",
-                                                    "4. Transaction Amount and Count of Aggregated Transaction",
-                                                    "5. Transaction Amount and Count of Map Transaction",
-                                                    "6. Transaction Amount and Count of Top Transaction",
-                                                    "7. Transaction Count of Aggregated User",
-                                                    "8. Registered user of Map User",
-                                                    "9. AppOpens of Map User",
-                                                    "10. Registered Users of Top User",
-                                                    "11. Top 10 Brands by Transaction Count in Aggregated User",
-                                                    "12. Monthly Transaction Amount Trend for a Selected State"])
+    question = st.selectbox("Select the Question", ["1. Top 10 Brands by Transaction Count in Aggregated User",
+                                                    "2. Yearly Transaction Amount Trend for a Selected State",
+                                                    "3. Top 10 States by Total Transaction Amount",
+                                                    "4. Top 10 States by Total Transaction Count",
+                                                    "5. Top 10 Districts by Registered Users in Map User",
+                                                    "6. Transaction Amount and Count of Aggregated Insurance",
+                                                    "7. Transaction Amount and Count of Map Insurance",
+                                                    "8. Transaction Amount and Count of Top Insurance",
+                                                    "9. Transaction Amount and Count of Aggregated Transaction",
+                                                    "10. Transaction Amount and Count of Map Transaction",
+                                                    "11. Transaction Amount and Count of Top Transaction",
+                                                    "12. Transaction Count of Aggregated User",
+                                                    "13 Registered user of Map User",
+                                                    "14. AppOpens of Map User",
+                                                    "15. Registered Users of Top User"])
 
-    
-    if question == "1. Transaction Amount and Count of Aggregated Insurance":
+
+    if question == "1. Top 10 Brands by Transaction Count in Aggregated User":        
+       
+       st.subheader("TOP BRANDS IN AGGREGATED USER")
+       top_brands_by_transaction_count("aggregated_user")
+
+    elif question == "2. Yearly Transaction Amount Trend for a Selected State":        
+       
+       state = st.selectbox("Select the state", map_transaction["States"].unique())
+       st.subheader(f"YEARLY TRANSACTION AMOUNT TREND IN {state.upper()}")
+       yearly_transaction_trend("map_transaction", state)
+
+
+    elif question == "3. Top 10 States by Total Transaction Amount":
+        st.subheader("TOP 10 STATES BY TOTAL TRANSACTION AMOUNT")
+        top_states_by_transaction_amount("aggregated_transaction")
+
+    elif question == "4. Top 10 States by Total Transaction Count":
+        st.subheader("TOP 10 STATES BY TOTAL TRANSACTION COUNT")
+        top_states_by_transaction_count("aggregated_transaction")
+
+
+    elif question == "5. Top 10 Districts by Registered Users in Map User":
+        state = st.selectbox("Select the state", map_user["States"].unique())
+        st.subheader(f"TOP 10 DISTRICTS BY REGISTERED USERS IN {state.upper()}")
+        top_districts_by_registered_users("map_user", state)
+
+
+    elif question == "6. Transaction Amount and Count of Aggregated Insurance":
 
         st.subheader("TRANSACTION AMOUNT")
         top_chart_transaction_amount("aggregated_insurance")
@@ -1076,7 +1202,7 @@ elif select == "Top Charts":
         st.subheader("TRANSACTION COUNT")
         top_chart_transaction_count("aggregated_insurance")
 
-    elif question == "2. Transaction Amount and Count of Map Insurance":
+    elif question == "7. Transaction Amount and Count of Map Insurance":
 
         st.subheader("TRANSACTION AMOUNT")
         top_chart_transaction_amount("map_insurance")
@@ -1084,7 +1210,7 @@ elif select == "Top Charts":
         st.subheader("TRANSACTION COUNT")
         top_chart_transaction_count("map_insurance")
 
-    elif question == "3. Transaction Amount and Count of Top Insurance":
+    elif question == "8. Transaction Amount and Count of Top Insurance":
 
         st.subheader("TRANSACTION AMOUNT")
         top_chart_transaction_amount("top_insurance")
@@ -1092,7 +1218,7 @@ elif select == "Top Charts":
         st.subheader("TRANSACTION COUNT")
         top_chart_transaction_count("top_insurance")
 
-    elif question == "4. Transaction Amount and Count of Aggregated Transaction":
+    elif question == "9. Transaction Amount and Count of Aggregated Transaction":
 
         st.subheader("TRANSACTION AMOUNT")
         top_chart_transaction_amount("aggregated_transaction")
@@ -1100,7 +1226,7 @@ elif select == "Top Charts":
         st.subheader("TRANSACTION COUNT")
         top_chart_transaction_count("aggregated_transaction")
 
-    elif question == "5. Transaction Amount and Count of Map Transaction":
+    elif question == "10. Transaction Amount and Count of Map Transaction":
 
         st.subheader("TRANSACTION AMOUNT")
         top_chart_transaction_amount("map_transaction")
@@ -1108,7 +1234,7 @@ elif select == "Top Charts":
         st.subheader("TRANSACTION COUNT")
         top_chart_transaction_count("map_transaction")
 
-    elif question == "6. Transaction Amount and Count of Top Transaction":
+    elif question == "11. Transaction Amount and Count of Top Transaction":
 
         st.subheader("TRANSACTION AMOUNT")
         top_chart_transaction_amount("top_transaction")
@@ -1116,38 +1242,31 @@ elif select == "Top Charts":
         st.subheader("TRANSACTION COUNT")
         top_chart_transaction_count("top_transaction")
 
-    elif question == "7. Transaction Count of Aggregated User":
+    elif question == "12. Transaction Count of Aggregated User":
     
         st.subheader("TRANSACTION COUNT")
         top_chart_transaction_count("aggregated_user")
 
-    elif question == "8. Registered user of Map User":
+    elif question == "13. Registered user of Map User":
         
        states = st.selectbox("Select the state",  map_user["States"].unique())
        st.subheader("REGISTERED USERS")
        top_chart_registered_user("map_user", states)
 
-    elif question == "9. AppOpens of Map User":
+    elif question == "14. AppOpens of Map User":
         
        states = st.selectbox("Select the state",  map_user["States"].unique())
        st.subheader("APPOPENS")
        top_chart_appopens("map_user", states)
 
-    elif question == "10. Registered Users of Top User":        
+    elif question == "15. Registered Users of Top User":        
        
        st.subheader("REGISTERED USERS OF TOP USERS")
        top_chart_registered_users("top_user")
 
-    elif question == "11. Top 10 Brands by Transaction Count in Aggregated User":        
-       
-        st.subheader("TOP BRANDS IN AGGREGATED USER")
-        top_brands_by_transaction_count("aggregated_user")
-
-    """elif question == "12. Monthly Transaction Amount Trend for a Selected State":        
-       
-       state = st.selectbox("Select the state", map_transaction["States"].unique())
-       st.subheader(f"MONTHLY TRANSACTION AMOUNT TREND IN {state.upper()}")
-       monthly_transaction_trend("map_transaction", state)"""
+    
+    
+    
     
     
     
